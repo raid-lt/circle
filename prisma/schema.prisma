@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  contacts     Contact[]
+  groups       Group[]
+  activities   Activity[]
+  interactions Interaction[]
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  birthday  DateTime?
+  phone     String?
+  email     String?
+  location  String?
+  job       String?
+  company   String?
+  socials   String?   // JSON string: { instagram, linkedin, twitter, etc. }
+  photoUrl  String?
+  howWeMet  String?
+  pronouns  String?
+  notes     String?
+  archived  Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  groups       ContactGroup[]
+  activities   ContactActivity[]
+  interactions InteractionContact[]
+
+  @@index([userId])
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  color     String?  // hex color for UI
+  createdAt DateTime @default(now())
+
+  contacts ContactGroup[]
+
+  @@index([userId])
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  emoji     String?
+  createdAt DateTime @default(now())
+
+  contacts ContactActivity[]
+
+  @@index([userId])
+}
+
+model ContactGroup {
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  groupId   String
+  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, groupId])
+}
+
+model ContactActivity {
+  contactId  String
+  contact    Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, activityId])
+}
+
+model Interaction {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date      DateTime
+  type      String   // MET_UP, CALL, TEXT, OTHER
+  note      String?
+  createdAt DateTime @default(now())
+
+  contacts InteractionContact[]
+
+  @@index([userId])
+}
+
+model InteractionContact {
+  interactionId String
+  interaction   Interaction @relation(fields: [interactionId], references: [id], onDelete: Cascade)
+
+  contactId     String
+  contact       Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@id([interactionId, contactId])
+}
+
+// InteractionType values: MET_UP, CALL, TEXT, OTHER
